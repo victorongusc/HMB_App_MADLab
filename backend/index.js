@@ -48,7 +48,7 @@ module.exports = async function(context, req) {
 
     bb.on("finish", resolve);
     bb.on("error", reject);
-    bb.end(req.rawBody);
+    bb.end(req.rawBody); // <-- feed Busboy the raw multipart buffer
   });
 
   // ── Define forbidden EXIF key patterns ────────────────
