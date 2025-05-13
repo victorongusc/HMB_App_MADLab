@@ -5,9 +5,8 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": [ "options", "post" ],
+      "methods": [ "POST", "OPTIONS" ],
       "route": "upload",
-      "dataType": "binary",
       "rawBody": true
     },
     {
@@ -15,6 +14,5 @@
       "direction": "out",
       "name": "res"
     }
-  ],
-  "scriptFile": "index.js"
+  ]
 }
