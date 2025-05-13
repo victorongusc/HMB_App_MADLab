@@ -37,3 +37,4 @@ jobs:
           api_location:              ./backend       # or leave blank if none
           output_location:           ./frontend/dist # or whatever your build output folder is
           skip_app_build:            true
+          skip_api_build:            true
