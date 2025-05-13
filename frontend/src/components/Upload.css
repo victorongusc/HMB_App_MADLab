@@ -1,0 +1,17 @@
+/* src/components/Upload.css */
+.upload-input { display: none; }
+
+.upload-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  border: 2px dashed #cbd5e1;       /* gray-300 */
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.upload-label:hover {
+  background: #f1f5f9;              /* gray-100 */
+  border-color: var(--c-primary);
+}

@@ -1,0 +1,22 @@
+/* src/components/Button.css */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 500;
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--radius);
+  border: none;
+  color: #fff;
+  background: var(--c-primary);
+  cursor: pointer;
+  transition: background 120ms ease, box-shadow 120ms ease;
+}
+.btn:hover {
+  background: var(--c-primary-hover);
+  box-shadow: var(--shadow-sm);
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
