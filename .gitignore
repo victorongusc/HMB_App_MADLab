@@ -1,0 +1,10 @@
+# node
+node_modules/
+# Logs
+*.log
+# build outputs
+frontend/dist/
+frontend/build/
+backend/bin/
+# OS
+.DS_Store
