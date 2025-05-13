@@ -33,8 +33,8 @@ jobs:
           repo_token:                ${{ secrets.GITHUB_TOKEN }}
           action:                    upload
           # point app_location at your built files instead of source
-          app_location:              ./frontend
-          api_location:              ./backend       # or leave blank if none
-          output_location:           ./frontend/dist # or whatever your build output folder is
+          app_location:              "frontend"
+          api_location:              "backend"       # or leave blank if none
+          output_location:           "dist" # or whatever your build output folder is
           skip_app_build:            true
           skip_api_build:            true
