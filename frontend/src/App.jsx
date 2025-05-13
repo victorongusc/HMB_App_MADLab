@@ -39,6 +39,8 @@ function App() {
     setSamples(updated);
   };
 
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -60,7 +62,7 @@ function App() {
 
     try {
       setStatus('Uploading...');
-      const response = await fetch("http://localhost:7071/api/upload", {
+      const response = await fetch(`${API_BASE}/api/upload`, {
   method: "POST",
   body: formData,
 });
