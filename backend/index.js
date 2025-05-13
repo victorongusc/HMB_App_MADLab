@@ -1,30 +1,40 @@
-const { app, HttpRequest, InvocationContext } = require("@azure/functions");
+// backend/index.js
+const { app } = require("@azure/functions");
 const uploadHandler = require("./uploadHandler");
 
-// -- Global middleware (CORS, logging, etc.)
-app.use("http", async (context, next) => {
-  const req = context.req;
-  // CORS preflight
+/**
+ * Single HTTP-triggered function:  POST /api/upload
+ *    – also handles the CORS pre-flight OPTIONS request
+ */
+app.http("upload", {
+  methods: ["POST", "OPTIONS"],
+  route:   "upload",
+  authLevel: "anonymous"
+}, async (req, context) => {
+
+  /* ---- CORS pre-flight ---- */
   if (req.method === "OPTIONS") {
     context.res = {
       status: 204,
       headers: {
         "Access-Control-Allow-Origin":  "*",
-        "Access-Control-Allow-Methods":"POST,OPTIONS",
-        "Access-Control-Allow-Headers":"Content-Type"
+        "Access-Control-Allow-Methods": "POST,OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type"
       }
     };
-    return;
+    return;                                 // nothing else to do
   }
-  // for actual requests, continue to handler
-  await next();
+
+  /* ---- real POST ---- */
+  await uploadHandler(req, context);
+
+  /* ---- CORS headers on normal response ---- */
+  if (context.res && context.res.headers) {
+    context.res.headers["Access-Control-Allow-Origin"]  = "*";
+    context.res.headers["Access-Control-Allow-Methods"] = "POST,OPTIONS";
+    context.res.headers["Access-Control-Allow-Headers"] = "Content-Type";
+  }
 });
 
-// -- HTTP-triggered function declaration
-app.http("upload", {
-  methods: ["POST"],
-  route: "upload",         // maps to /api/upload
-  authLevel: "anonymous"
-}, uploadHandler);
-
+/* Export the app object so the Functions host picks it up */
 module.exports = app;
