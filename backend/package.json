@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@azure/functions": "^4.7.0",
+    "@azure/storage-blob": "^12.27.0",
     "exifr": "^7.1.0",
     "file-type": "^20.5.0",
     "formidable": "^3.5.2",
