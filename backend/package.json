@@ -2,7 +2,8 @@
   "name": "hmb-backend",
   "version": "1.0.0",
   "scripts": {
-    "start": "func start --verbose"
+    "start": "func start --verbose",
+    "build": "echo 'No build necessary for backend'; exit 0"
   },
   "dependencies": {
     "exifr": "^7.1.0",
