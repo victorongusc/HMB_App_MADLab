@@ -36,5 +36,10 @@ jobs:
           app_location:              "frontend"
           api_location:              "backend"       # or leave blank if none
           output_location:           "dist" # or whatever your build output folder is
-          skip_app_build:            true
-          skip_api_build:            true
+          skip_app_build:            false
+          skip_api_build:            false
+
+env:
+  AZURE_FUNCTIONS_NODE_VERSION: 18
+
+  
