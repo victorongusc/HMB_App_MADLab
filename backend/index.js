@@ -48,7 +48,7 @@ module.exports = async function(context, req) {
 
     bb.on("finish", resolve);
     bb.on("error", reject);
-    bb.end(req.body);
+    bb.end(req.rawBody);
   });
 
   // ── Define forbidden EXIF key patterns ────────────────
@@ -133,7 +133,10 @@ module.exports = async function(context, req) {
   // ── Respond with summary ───────────────────────────────
   context.res = {
     status: 200,
-    headers: { 'Access-Control-Allow-Origin': '*' },
+    headers: {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS"
+  },
     body: { csvPath, files: filesOut }
   };
 };

@@ -7,7 +7,8 @@
       "name": "req",
       "methods": [ "options", "post" ],
       "route": "upload",
-      "dataType": "binary"
+      "dataType": "binary",
+      "rawBody": true
     },
     {
       "type": "http",

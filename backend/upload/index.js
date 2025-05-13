@@ -48,7 +48,7 @@ module.exports = async function(context, req) {
 
     bb.on("finish", resolve);
     bb.on("error", reject);
-    bb.end(req.body);
+    bb.end(req.rawBody);
   });
 
   // ── Define forbidden EXIF key patterns ────────────────
