@@ -11,19 +11,28 @@ jobs:
       # 1. Get your code
       - uses: actions/checkout@v3
 
-      # 2. Build your frontend yourself (this installs devDeps and runs vite)
+      # 2. Setup Node.js (caching)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            backend/package-lock.json
+
+      # 3. Build your frontend yourself (this installs devDeps and runs vite)
       - name: Install & build frontend
         working-directory: ./frontend
         run: |
-          npm install
+          npm ci
           npm run build
 
       # 3. (Optional) Build your backend, if you need to compile or bundle it
       - name: Build backend (optional)
         working-directory: ./backend
         run: |
-          npm install
-          npm run build   # or whatever your backend build step is
+          npm install --omit=dev
+          npm run build
 
       # 4. Deploy the already-built output
       - name: Build And Deploy to Azure Static Web Apps
