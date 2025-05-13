@@ -8,14 +8,31 @@ jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
+      # 1. Get your code
       - uses: actions/checkout@v3
 
-      - name: Build And Deploy
+      # 2. Build your frontend yourself (this installs devDeps and runs vite)
+      - name: Install & build frontend
+        working-directory: ./frontend
+        run: |
+          npm install
+          npm run build
+
+      # 3. (Optional) Build your backend, if you need to compile or bundle it
+      - name: Build backend (optional)
+        working-directory: ./backend
+        run: |
+          npm install
+          npm run build   # or whatever your backend build step is
+
+      # 4. Deploy the already-built output
+      - name: Build And Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token:                ${{ secrets.GITHUB_TOKEN }}
           action:                    upload
-          app_location:              "frontend"
-          api_location:              "backend"
-          output_location:           "dist"
+          # point app_location at your built files instead of source
+          app_location:              ./frontend/dist
+          api_location:              backend       # or leave blank if none
+          skip_app_build:            true
