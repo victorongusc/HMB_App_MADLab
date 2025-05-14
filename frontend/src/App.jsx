@@ -1,173 +1,221 @@
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
+import Card from './components/Card';
+import PrimaryButton from './components/PrimaryButton';
 import './App.css';
 
-
-function App() {
-  const [userId, setUserId] = useState('');
-  const [dateOfSample, setDateOfSample] = useState('');
-  const [samples, setSamples] = useState(
-    Array(5).fill().map(() => ({ file: null, weight: '', preview: null }))
-  );
-  const [status, setStatus] = useState('');
-  const [formLocked, setFormLocked] = useState(false);
-
-  const fileInputs = useRef([]);
-
-  const handleDrop = (index, event) => {
-    event.preventDefault();
-    const file = event.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
-      updateSample(index, file);
-    }
+function makePreview(file) {
+  return {
+    id: crypto.randomUUID(),
+    name: file.name,
+    thumb: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
+    file,
+    mass: '',
+    status: 'Pending',
+    progress: 0
   };
+}
 
-  const updateSample = (index, file) => {
-    const updated = [...samples];
-    updated[index].file = file;
-    updated[index].preview = URL.createObjectURL(file);
-    setSamples(updated);
-  };
+export default function App() {
+  /* shared fields */
+  const [participantId, setParticipantId] = useState('');
+  const [sessionDate, setSessionDate]   = useState('');
 
-  const handleFileChange = (index, file) => {
-    if (file && file.type.startsWith('image/')) {
-      updateSample(index, file);
-    }
-  };
+  /* per-file */
+  const [uploads, setUploads] = useState([]);
 
-  const handleWeightChange = (index, weight) => {
-    const updated = [...samples];
-    updated[index].weight = weight;
-    setSamples(updated);
-  };
+  /* hidden input ref */
+  const fileInputRef = useRef(null);
 
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+  /* pick files (via click or drop) */
+  function addFiles(fileList) {
+    const files = Array.from(fileList);
+    setUploads((prev) => [...prev, ...files.map(makePreview)]);
+  }
+  function handleChooseClick() {
+    fileInputRef.current?.click();
+  }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  /* mass change */
+  const handleMassChange = (id, v) =>
+    setUploads((p) => p.map((u) => (u.id === id ? { ...u, mass: v } : u)));
 
-    if (!userId || !dateOfSample) {
-      setStatus('Please fill out User ID and Date.');
-      return;
-    }
+  /* validation */
+  const ready =
+    participantId.trim() &&
+    sessionDate &&
+    uploads.length &&
+    uploads.every((u) => u.mass && !isNaN(u.mass));
 
-    const formData = new FormData();
-    formData.append('userId', userId);
-    formData.append('dateOfSample', dateOfSample);
+  /* per-file upload with progress */
+  function uploadFile(u) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/upload');
 
-    samples.forEach((sample) => {
-      if (sample.file) {
-        formData.append('files', sample.file);
-        formData.append('weights', sample.weight);
-      }
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const pct = Math.round((e.loaded / e.total) * 100);
+          setUploads((prev) =>
+            prev.map((x) => (x.id === u.id ? { ...x, progress: pct } : x))
+          );
+        }
+      };
+      xhr.onload = () =>
+        xhr.status >= 200 && xhr.status < 300
+          ? resolve()
+          : reject(new Error(`HTTP ${xhr.status}`));
+      xhr.onerror = () => reject(new Error('Network error'));
+
+      const fd = new FormData();
+      fd.append('participantId', participantId);
+      fd.append('sessionDate', sessionDate);
+      fd.append('mass', u.mass);
+      fd.append('upload', u.file, u.name);
+      xhr.send(fd);
     });
+  }
 
-    try {
-      setStatus('Uploading...');
-      const response = await fetch(`${API_BASE}/api/upload`, {
-  method: "POST",
-  body: formData,
-});
-
-
-      if (response.ok) {
-        setStatus('Upload successful!');
-        setFormLocked(true);
-      } else {
-        setStatus('Upload failed.');
+  async function handleUpload() {
+    for (const u of uploads) {
+      setUploads((p) =>
+        p.map((x) => (x.id === u.id ? { ...x, status: 'Uploading…' } : x))
+      );
+      try {
+        await uploadFile(u);
+        setUploads((p) =>
+          p.map((x) =>
+            x.id === u.id ? { ...x, status: 'Done', progress: 100 } : x
+          )
+        );
+      } catch (err) {
+        setUploads((p) =>
+          p.map((x) =>
+            x.id === u.id
+              ? { ...x, status: `Error (${err.message})` }
+              : x
+          )
+        );
       }
-    } catch (error) {
-      console.error(error);
-      setStatus('An error occurred.');
     }
-  };
+  }
 
-  const handleReset = () => {
-    setSamples(Array(5).fill().map(() => ({ file: null, weight: '', preview: null })));
-    setStatus('');
-    setFormLocked(false);
-  };
+  /* drag-n-drop handlers */
+  const prevent = (e) => e.preventDefault();
 
   return (
-    <div className="app">
-      <form onSubmit={handleSubmit} className="form">
-        <h1>Image Intake Form</h1>
+    <div className="container">
+      <h1>Heavy Menstrual Bleeding Data Submission</h1>
 
-        <div className="form-group">
-          <label>User ID:</label>
-          <input
-            type="text"
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
-            required
-            disabled={formLocked}
-          />
+      {/* participant + picker */}
+      <Card className="intro-card">
+        <p>
+          Enter your participant information and upload photos here.
+          Click the <strong>Upload</strong> button when you&rsquo;re finished.
+        </p>
+
+        <div className="form-grid">
+          <label>
+            User&nbsp;ID
+            <input
+              value={participantId}
+              onChange={(e) => setParticipantId(e.target.value)}
+              placeholder="e.g. P-001"
+              required
+            />
+          </label>
+          <label>
+            Date
+            <input
+              type="date"
+              value={sessionDate}
+              onChange={(e) => setSessionDate(e.target.value)}
+              required
+            />
+          </label>
         </div>
 
-        <div className="form-group">
-          <label>Date of Sample:</label>
-          <input
-            type="date"
-            value={dateOfSample}
-            onChange={(e) => setDateOfSample(e.target.value)}
-            required
-            disabled={formLocked}
-          />
-        </div>
+        {/* drag-drop zone */}
+        {!uploads.length && (
+          <div
+            className="dropzone"
+            onClick={handleChooseClick}
+            onDragOver={prevent}
+            onDragEnter={prevent}
+            onDrop={(e) => {
+              prevent(e);
+              addFiles(e.dataTransfer.files);
+            }}
+          >
+            Drag photos here <br />or click to select
+          </div>
+        )}
 
-        <div className="samples-row">
-          {samples.map((sample, index) => (
-            <div
-              className="sample-box"
-              key={index}
-              onDrop={(e) => !formLocked && handleDrop(index, e)}
-              onDragOver={(e) => e.preventDefault()}
-            >
-              <div
-                className="drop-zone"
-                onClick={() => !formLocked && fileInputs.current[index].click()}
-              >
-                {sample.preview ? (
-                  <img src={sample.preview} alt="Preview" />
-                ) : (
-                  <span>Drag & drop or click</span>
-                )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".jpg,.jpeg,.png"
+          multiple
+          hidden
+          onChange={(e) => addFiles(e.target.files)}
+        />
+
+  {/* centered upload button (appears once files are chosen) */}
+  {uploads.length > 0 && (
+    <div className="upload-btn-wrap">
+      <PrimaryButton
+        className="btn--lg"
+        disabled={!ready}
+        onClick={handleUpload}
+   >
+     Upload&nbsp;({uploads.length})
+   </PrimaryButton>
+  </div>
+ )}
+
+      </Card>
+
+      {/* gallery */}
+      {uploads.length > 0 && (
+        <section className="gallery">
+          {uploads.map((u) => (
+            <Card key={u.id}>
+              {u.thumb ? (
+                <img src={u.thumb} alt="" loading="lazy" />
+              ) : (
+                <div
+                  style={{
+                    height: 180,
+                    display: 'grid',
+                    placeItems: 'center',
+                    background: '#f3f4f6'
+                  }}
+                >
+                  📄
+                </div>
+              )}
+
+              <label className="mass-label">
+                Mass&nbsp;(g)
+                <input
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={u.mass}
+                  onChange={(e) => handleMassChange(u.id, e.target.value)}
+                />
+              </label>
+
+              <div className="progress-wrapper">
+                <div
+                  className="progress-bar"
+                  style={{ width: `${u.progress}%` }}
+                />
               </div>
-              <input
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                ref={(el) => (fileInputs.current[index] = el)}
-                onChange={(e) => handleFileChange(index, e.target.files[0])}
-                disabled={formLocked}
-              />
-              <input
-                type="number"
-                placeholder="Weight (g)"
-                value={sample.weight}
-                onChange={(e) => handleWeightChange(index, e.target.value)}
-                disabled={formLocked}
-              />
-            </div>
+              <p className="status">{u.status}</p>
+            </Card>
           ))}
-        </div>
-
-        <button type="submit" disabled={formLocked}>Upload</button>
-
-        {formLocked && <div className="overlay" />}
-      </form>
-
-      {formLocked && (
-        <div className="success-message">
-          <p>✅ Upload successful!</p>
-          <button className="submit-more-button" onClick={handleReset}>
-            Submit More Data
-          </button>
-        </div>
+        </section>
       )}
-
-      <p className="status-text">{status}</p>
     </div>
   );
 }
-
-export default App;

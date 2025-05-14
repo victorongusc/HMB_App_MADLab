@@ -9,10 +9,12 @@
   },
   "dependencies": {
     "@azure/functions": "^4.7.0",
+    "@azure/identity": "^4.9.1",
     "@azure/storage-blob": "^12.27.0",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
     "exifr": "^7.1.0",
     "file-type": "^20.5.0",
-    "formidable": "^3.5.2",
+    "formidable": "^3.5.4",
     "sharp": "^0.32.0",
     "streamifier": "^0.1.1"
   },
